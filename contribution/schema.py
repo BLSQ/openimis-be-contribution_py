@@ -1,4 +1,3 @@
-import graphene
 from django.db.models import Q
 import graphene_django_optimizer as gql_optimizer
 
@@ -9,13 +8,11 @@ from core.schema import signal_mutation_module_before_mutating, OrderedDjangoFil
 # We do need all queries and mutations in the namespace here.
 from .gql_queries import *  # lgtm [py/polluting-import]
 from .gql_mutations import *  # lgtm [py/polluting-import]
-from .services import check_unique_premium_receipt_code_within_product
 
 
 class Query(graphene.ObjectType):
     premiums = OrderedDjangoFilterConnectionField(
         PremiumGQLType,
-        payer_id=graphene.ID(),
         client_mutation_id=graphene.String(),
         show_history=graphene.Boolean(),
         parent_location=graphene.String(),
@@ -27,20 +24,20 @@ class Query(graphene.ObjectType):
         policy_uuids=graphene.List(graphene.String, required=True),
         orderBy=graphene.List(of_type=graphene.String),
     )
-    validate_premium_code = graphene.Field(
-        graphene.Boolean,
-        code=graphene.String(required=True),
-        policy_uuid=graphene.String(required=True),
-        description="Checks that the specified premium code is unique for a given policy."
+
+    payment_service_provider = OrderedDjangoFilterConnectionField(
+        PaymentServiceProviderGQLType,
+        client_mutation_id=graphene.String(),
+        orderBy=graphene.List(of_type=graphene.String),
+        show_history = graphene.Boolean(),
+
     )
+
     def resolve_premiums(self, info, **kwargs):
         if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):
             raise PermissionDenied(_("unauthorized"))
         filters = []
         client_mutation_id = kwargs.get("client_mutation_id", None)
-        payer_id = kwargs.get("payer_id", None)
-        if payer_id:
-            filters.append(Q(payer__id=payer_id))
         if client_mutation_id:
             filters.append(Q(mutations__mutation__client_mutation_id=client_mutation_id))
         show_history = kwargs.get('show_history', False)
@@ -63,14 +60,12 @@ class Query(graphene.ObjectType):
             raise PermissionDenied(_("unauthorized"))
         policies = policy_models.Policy.objects.values_list('id').filter(Q(uuid__in=kwargs.get('policy_uuids')))
         return Premium.objects.filter(Q(policy_id__in=policies), *filter_validity(**kwargs))
+    
 
-    def resolve_validate_premium_code(self, info, **kwargs):
-        if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):
+    def resolve_wallet(self, info, **kwargs):
+        if not info.context.user.has_perms(ContributionConfig.gql_query_payment_service_provider):
             raise PermissionDenied(_("unauthorized"))
-        errors = check_unique_premium_receipt_code_within_product(code=kwargs['code'],
-                                                                  policy_uuid=kwargs['policy_uuid'])
-        return False if errors else True
-
+        
 
 def set_premium_deleted(premium):
     try:
@@ -90,8 +85,12 @@ class Mutation(graphene.ObjectType):
     delete_premium = DeletePremiumsMutation.Field()
     create_premium = CreatePremiumMutation.Field()
     update_premium = UpdatePremiumMutation.Field()
+    create_payment_service_provider =  CreatePaymentServiceProvider.Field()
+    update_payment_service_provider =  UpdatePaymentServiceProvider.Field()
+    delete_payment_service_provider =  DeletePaymentServiceProvider.Field()
 
 
-def bind_signals():
+
+def bind_signals(): 
     signal_mutation_module_before_mutating["policy"].connect(on_policy_mutation)
     signal_mutation_module_before_mutating["contribution"].connect(on_premium_mutation)

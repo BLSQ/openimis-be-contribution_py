@@ -1,12 +1,27 @@
 import graphene
 from graphene_django import DjangoObjectType
-
-from .apps import ContributionConfig
-from .models import Premium, PremiumMutation
+from .models import Premium, PremiumMutation, PaymentServiceProvider
 from core import prefix_filterset, ExtendedConnection
 from policy.schema import PolicyGQLType
-from django.core.exceptions import PermissionDenied
-from django.utils.translation import gettext as _
+
+
+class PaymentServiceProviderGQLType(DjangoObjectType):
+
+    """
+    create a category with a label in the slug field
+    """
+
+    class Meta:
+        model = PaymentServiceProvider
+        interfaces = (graphene.relay.Node,)
+        filter_fields = {
+            "id":["exact"],
+            "uuid": ["exact"], 
+            "PSPName":["exact"],
+            "PSPAccount":["exact"],
+            "Pin":["exact"],
+        }
+        connection_class = ExtendedConnection
 
 
 class PremiumGQLType(DjangoObjectType):
@@ -20,6 +35,7 @@ class PremiumGQLType(DjangoObjectType):
             "amount": ["exact", "lt", "lte", "gt", "gte"],
             "pay_date": ["exact", "lt", "lte", "gt", "gte"],
             "pay_type": ["exact"],
+            "remarks" : ["exact"],
             "is_photo_fee": ["exact"],
             "receipt": ["exact", "icontains"],
             **prefix_filterset("policy__", PolicyGQLType._meta.filter_fields)
@@ -27,8 +43,6 @@ class PremiumGQLType(DjangoObjectType):
         connection_class = ExtendedConnection
 
     def resolve_client_mutation_id(self, info):
-        if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):
-            raise PermissionDenied(_("unauthorized"))
         premium_mutation = self.mutations.select_related(
             'mutation').filter(mutation__status=0).first()
         return premium_mutation.mutation.client_mutation_id if premium_mutation else None
