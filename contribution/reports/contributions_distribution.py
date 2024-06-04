@@ -3298,7 +3298,7 @@ template = """
           "arrayItemType": "string",
           "eval": false,
           "nullable": false,
-          "pattern": "$ #,##0.00",
+          "pattern": "D #,##0.00",
           "expression": "",
           "showOnlyNameType": false,
           "testData": ""
@@ -3310,7 +3310,7 @@ template = """
           "arrayItemType": "string",
           "eval": false,
           "nullable": false,
-          "pattern": "$ #,##0.00",
+          "pattern": "D #,##0.00",
           "expression": "",
           "showOnlyNameType": false,
           "testData": ""
@@ -3322,7 +3322,7 @@ template = """
           "arrayItemType": "string",
           "eval": false,
           "nullable": false,
-          "pattern": "$ #,##0.00",
+          "pattern": "D #,##0.00",
           "expression": "",
           "showOnlyNameType": false,
           "testData": ""
@@ -3458,7 +3458,7 @@ template = """
       "arrayItemType": "string",
       "eval": false,
       "nullable": true,
-      "pattern": "$ #,##0.00",
+      "pattern": "D #,##0.00",
       "expression": "",
       "showOnlyNameType": false,
       "testData": ""
@@ -3470,7 +3470,7 @@ template = """
       "arrayItemType": "string",
       "eval": false,
       "nullable": false,
-      "pattern": "$ #,##0.00",
+      "pattern": "D #,##0.00",
       "expression": "",
       "showOnlyNameType": false,
       "testData": ""
@@ -3482,7 +3482,7 @@ template = """
       "arrayItemType": "string",
       "eval": false,
       "nullable": false,
-      "pattern": "$ #,##0.00",
+      "pattern": "D #,##0.00",
       "expression": "",
       "showOnlyNameType": false,
       "testData": ""
